@@ -28,14 +28,14 @@ type FakeDeployment struct {
 		result1 string
 		result2 error
 	}
-	DiffStub        func([]byte, bool) (director.DiffLines, error)
+	DiffStub        func([]byte, bool) (director.DeploymentDiff, error)
 	diffMutex       sync.RWMutex
 	diffArgsForCall []struct {
 		arg1 []byte
 		arg2 bool
 	}
 	diffReturns struct {
-		result1 director.DiffLines
+		result1 director.DeploymentDiff
 		result2 error
 	}
 	ReleasesStub        func() ([]director.Release, error)
@@ -244,11 +244,14 @@ type FakeDeployment struct {
 	deleteReturns struct {
 		result1 error
 	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeDeployment) Name() string {
 	fake.nameMutex.Lock()
 	fake.nameArgsForCall = append(fake.nameArgsForCall, struct{}{})
+	fake.recordInvocation("Name", []interface{}{})
 	fake.nameMutex.Unlock()
 	if fake.NameStub != nil {
 		return fake.NameStub()
@@ -273,6 +276,7 @@ func (fake *FakeDeployment) NameReturns(result1 string) {
 func (fake *FakeDeployment) Manifest() (string, error) {
 	fake.manifestMutex.Lock()
 	fake.manifestArgsForCall = append(fake.manifestArgsForCall, struct{}{})
+	fake.recordInvocation("Manifest", []interface{}{})
 	fake.manifestMutex.Unlock()
 	if fake.ManifestStub != nil {
 		return fake.ManifestStub()
@@ -298,6 +302,7 @@ func (fake *FakeDeployment) ManifestReturns(result1 string, result2 error) {
 func (fake *FakeDeployment) CloudConfig() (string, error) {
 	fake.cloudConfigMutex.Lock()
 	fake.cloudConfigArgsForCall = append(fake.cloudConfigArgsForCall, struct{}{})
+	fake.recordInvocation("CloudConfig", []interface{}{})
 	fake.cloudConfigMutex.Unlock()
 	if fake.CloudConfigStub != nil {
 		return fake.CloudConfigStub()
@@ -320,12 +325,18 @@ func (fake *FakeDeployment) CloudConfigReturns(result1 string, result2 error) {
 	}{result1, result2}
 }
 
-func (fake *FakeDeployment) Diff(arg1 []byte, arg2 bool) (director.DiffLines, error) {
+func (fake *FakeDeployment) Diff(arg1 []byte, arg2 bool) (director.DeploymentDiff, error) {
+	var arg1Copy []byte
+	if arg1 != nil {
+		arg1Copy = make([]byte, len(arg1))
+		copy(arg1Copy, arg1)
+	}
 	fake.diffMutex.Lock()
 	fake.diffArgsForCall = append(fake.diffArgsForCall, struct {
 		arg1 []byte
 		arg2 bool
-	}{arg1, arg2})
+	}{arg1Copy, arg2})
+	fake.recordInvocation("Diff", []interface{}{arg1Copy, arg2})
 	fake.diffMutex.Unlock()
 	if fake.DiffStub != nil {
 		return fake.DiffStub(arg1, arg2)
@@ -346,10 +357,10 @@ func (fake *FakeDeployment) DiffArgsForCall(i int) ([]byte, bool) {
 	return fake.diffArgsForCall[i].arg1, fake.diffArgsForCall[i].arg2
 }
 
-func (fake *FakeDeployment) DiffReturns(result1 director.DiffLines, result2 error) {
+func (fake *FakeDeployment) DiffReturns(result1 director.DeploymentDiff, result2 error) {
 	fake.DiffStub = nil
 	fake.diffReturns = struct {
-		result1 director.DiffLines
+		result1 director.DeploymentDiff
 		result2 error
 	}{result1, result2}
 }
@@ -357,6 +368,7 @@ func (fake *FakeDeployment) DiffReturns(result1 director.DiffLines, result2 erro
 func (fake *FakeDeployment) Releases() ([]director.Release, error) {
 	fake.releasesMutex.Lock()
 	fake.releasesArgsForCall = append(fake.releasesArgsForCall, struct{}{})
+	fake.recordInvocation("Releases", []interface{}{})
 	fake.releasesMutex.Unlock()
 	if fake.ReleasesStub != nil {
 		return fake.ReleasesStub()
@@ -385,6 +397,7 @@ func (fake *FakeDeployment) ExportRelease(arg1 director.ReleaseSlug, arg2 direct
 		arg1 director.ReleaseSlug
 		arg2 director.OSVersionSlug
 	}{arg1, arg2})
+	fake.recordInvocation("ExportRelease", []interface{}{arg1, arg2})
 	fake.exportReleaseMutex.Unlock()
 	if fake.ExportReleaseStub != nil {
 		return fake.ExportReleaseStub(arg1, arg2)
@@ -416,6 +429,7 @@ func (fake *FakeDeployment) ExportReleaseReturns(result1 director.ExportReleaseR
 func (fake *FakeDeployment) Stemcells() ([]director.Stemcell, error) {
 	fake.stemcellsMutex.Lock()
 	fake.stemcellsArgsForCall = append(fake.stemcellsArgsForCall, struct{}{})
+	fake.recordInvocation("Stemcells", []interface{}{})
 	fake.stemcellsMutex.Unlock()
 	if fake.StemcellsStub != nil {
 		return fake.StemcellsStub()
@@ -441,6 +455,7 @@ func (fake *FakeDeployment) StemcellsReturns(result1 []director.Stemcell, result
 func (fake *FakeDeployment) VMInfos() ([]director.VMInfo, error) {
 	fake.vMInfosMutex.Lock()
 	fake.vMInfosArgsForCall = append(fake.vMInfosArgsForCall, struct{}{})
+	fake.recordInvocation("VMInfos", []interface{}{})
 	fake.vMInfosMutex.Unlock()
 	if fake.VMInfosStub != nil {
 		return fake.VMInfosStub()
@@ -466,6 +481,7 @@ func (fake *FakeDeployment) VMInfosReturns(result1 []director.VMInfo, result2 er
 func (fake *FakeDeployment) InstanceInfos() ([]director.VMInfo, error) {
 	fake.instanceInfosMutex.Lock()
 	fake.instanceInfosArgsForCall = append(fake.instanceInfosArgsForCall, struct{}{})
+	fake.recordInvocation("InstanceInfos", []interface{}{})
 	fake.instanceInfosMutex.Unlock()
 	if fake.InstanceInfosStub != nil {
 		return fake.InstanceInfosStub()
@@ -491,6 +507,7 @@ func (fake *FakeDeployment) InstanceInfosReturns(result1 []director.VMInfo, resu
 func (fake *FakeDeployment) Errands() ([]director.Errand, error) {
 	fake.errandsMutex.Lock()
 	fake.errandsArgsForCall = append(fake.errandsArgsForCall, struct{}{})
+	fake.recordInvocation("Errands", []interface{}{})
 	fake.errandsMutex.Unlock()
 	if fake.ErrandsStub != nil {
 		return fake.ErrandsStub()
@@ -519,6 +536,7 @@ func (fake *FakeDeployment) RunErrand(arg1 string, arg2 bool) (director.ErrandRe
 		arg1 string
 		arg2 bool
 	}{arg1, arg2})
+	fake.recordInvocation("RunErrand", []interface{}{arg1, arg2})
 	fake.runErrandMutex.Unlock()
 	if fake.RunErrandStub != nil {
 		return fake.RunErrandStub(arg1, arg2)
@@ -550,6 +568,7 @@ func (fake *FakeDeployment) RunErrandReturns(result1 director.ErrandResult, resu
 func (fake *FakeDeployment) ScanForProblems() ([]director.Problem, error) {
 	fake.scanForProblemsMutex.Lock()
 	fake.scanForProblemsArgsForCall = append(fake.scanForProblemsArgsForCall, struct{}{})
+	fake.recordInvocation("ScanForProblems", []interface{}{})
 	fake.scanForProblemsMutex.Unlock()
 	if fake.ScanForProblemsStub != nil {
 		return fake.ScanForProblemsStub()
@@ -573,10 +592,16 @@ func (fake *FakeDeployment) ScanForProblemsReturns(result1 []director.Problem, r
 }
 
 func (fake *FakeDeployment) ResolveProblems(arg1 []director.ProblemAnswer) error {
+	var arg1Copy []director.ProblemAnswer
+	if arg1 != nil {
+		arg1Copy = make([]director.ProblemAnswer, len(arg1))
+		copy(arg1Copy, arg1)
+	}
 	fake.resolveProblemsMutex.Lock()
 	fake.resolveProblemsArgsForCall = append(fake.resolveProblemsArgsForCall, struct {
 		arg1 []director.ProblemAnswer
-	}{arg1})
+	}{arg1Copy})
+	fake.recordInvocation("ResolveProblems", []interface{}{arg1Copy})
 	fake.resolveProblemsMutex.Unlock()
 	if fake.ResolveProblemsStub != nil {
 		return fake.ResolveProblemsStub(arg1)
@@ -607,6 +632,7 @@ func (fake *FakeDeployment) ResolveProblemsReturns(result1 error) {
 func (fake *FakeDeployment) Snapshots() ([]director.Snapshot, error) {
 	fake.snapshotsMutex.Lock()
 	fake.snapshotsArgsForCall = append(fake.snapshotsArgsForCall, struct{}{})
+	fake.recordInvocation("Snapshots", []interface{}{})
 	fake.snapshotsMutex.Unlock()
 	if fake.SnapshotsStub != nil {
 		return fake.SnapshotsStub()
@@ -632,6 +658,7 @@ func (fake *FakeDeployment) SnapshotsReturns(result1 []director.Snapshot, result
 func (fake *FakeDeployment) TakeSnapshots() error {
 	fake.takeSnapshotsMutex.Lock()
 	fake.takeSnapshotsArgsForCall = append(fake.takeSnapshotsArgsForCall, struct{}{})
+	fake.recordInvocation("TakeSnapshots", []interface{}{})
 	fake.takeSnapshotsMutex.Unlock()
 	if fake.TakeSnapshotsStub != nil {
 		return fake.TakeSnapshotsStub()
@@ -658,6 +685,7 @@ func (fake *FakeDeployment) DeleteSnapshot(arg1 string) error {
 	fake.deleteSnapshotArgsForCall = append(fake.deleteSnapshotArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	fake.recordInvocation("DeleteSnapshot", []interface{}{arg1})
 	fake.deleteSnapshotMutex.Unlock()
 	if fake.DeleteSnapshotStub != nil {
 		return fake.DeleteSnapshotStub(arg1)
@@ -688,6 +716,7 @@ func (fake *FakeDeployment) DeleteSnapshotReturns(result1 error) {
 func (fake *FakeDeployment) DeleteSnapshots() error {
 	fake.deleteSnapshotsMutex.Lock()
 	fake.deleteSnapshotsArgsForCall = append(fake.deleteSnapshotsArgsForCall, struct{}{})
+	fake.recordInvocation("DeleteSnapshots", []interface{}{})
 	fake.deleteSnapshotsMutex.Unlock()
 	if fake.DeleteSnapshotsStub != nil {
 		return fake.DeleteSnapshotsStub()
@@ -714,6 +743,7 @@ func (fake *FakeDeployment) DeleteVM(arg1 string) error {
 	fake.deleteVMArgsForCall = append(fake.deleteVMArgsForCall, struct {
 		arg1 string
 	}{arg1})
+	fake.recordInvocation("DeleteVM", []interface{}{arg1})
 	fake.deleteVMMutex.Unlock()
 	if fake.DeleteVMStub != nil {
 		return fake.DeleteVMStub(arg1)
@@ -747,6 +777,7 @@ func (fake *FakeDeployment) Start(slug director.AllOrPoolOrInstanceSlug, opts di
 		slug director.AllOrPoolOrInstanceSlug
 		opts director.ChangeJobStateOpts
 	}{slug, opts})
+	fake.recordInvocation("Start", []interface{}{slug, opts})
 	fake.startMutex.Unlock()
 	if fake.StartStub != nil {
 		return fake.StartStub(slug, opts)
@@ -781,6 +812,7 @@ func (fake *FakeDeployment) Stop(slug director.AllOrPoolOrInstanceSlug, hard boo
 		hard bool
 		opts director.ChangeJobStateOpts
 	}{slug, hard, opts})
+	fake.recordInvocation("Stop", []interface{}{slug, hard, opts})
 	fake.stopMutex.Unlock()
 	if fake.StopStub != nil {
 		return fake.StopStub(slug, hard, opts)
@@ -814,6 +846,7 @@ func (fake *FakeDeployment) Restart(slug director.AllOrPoolOrInstanceSlug, opts 
 		slug director.AllOrPoolOrInstanceSlug
 		opts director.ChangeJobStateOpts
 	}{slug, opts})
+	fake.recordInvocation("Restart", []interface{}{slug, opts})
 	fake.restartMutex.Unlock()
 	if fake.RestartStub != nil {
 		return fake.RestartStub(slug, opts)
@@ -847,6 +880,7 @@ func (fake *FakeDeployment) Recreate(slug director.AllOrPoolOrInstanceSlug, opts
 		slug director.AllOrPoolOrInstanceSlug
 		opts director.ChangeJobStateOpts
 	}{slug, opts})
+	fake.recordInvocation("Recreate", []interface{}{slug, opts})
 	fake.recreateMutex.Unlock()
 	if fake.RecreateStub != nil {
 		return fake.RecreateStub(slug, opts)
@@ -880,6 +914,7 @@ func (fake *FakeDeployment) SetUpSSH(arg1 director.AllOrPoolOrInstanceSlug, arg2
 		arg1 director.AllOrPoolOrInstanceSlug
 		arg2 director.SSHOpts
 	}{arg1, arg2})
+	fake.recordInvocation("SetUpSSH", []interface{}{arg1, arg2})
 	fake.setUpSSHMutex.Unlock()
 	if fake.SetUpSSHStub != nil {
 		return fake.SetUpSSHStub(arg1, arg2)
@@ -914,6 +949,7 @@ func (fake *FakeDeployment) CleanUpSSH(arg1 director.AllOrPoolOrInstanceSlug, ar
 		arg1 director.AllOrPoolOrInstanceSlug
 		arg2 director.SSHOpts
 	}{arg1, arg2})
+	fake.recordInvocation("CleanUpSSH", []interface{}{arg1, arg2})
 	fake.cleanUpSSHMutex.Unlock()
 	if fake.CleanUpSSHStub != nil {
 		return fake.CleanUpSSHStub(arg1, arg2)
@@ -942,12 +978,18 @@ func (fake *FakeDeployment) CleanUpSSHReturns(result1 error) {
 }
 
 func (fake *FakeDeployment) FetchLogs(arg1 director.InstanceSlug, arg2 []string, arg3 bool) (director.LogsResult, error) {
+	var arg2Copy []string
+	if arg2 != nil {
+		arg2Copy = make([]string, len(arg2))
+		copy(arg2Copy, arg2)
+	}
 	fake.fetchLogsMutex.Lock()
 	fake.fetchLogsArgsForCall = append(fake.fetchLogsArgsForCall, struct {
 		arg1 director.InstanceSlug
 		arg2 []string
 		arg3 bool
-	}{arg1, arg2, arg3})
+	}{arg1, arg2Copy, arg3})
+	fake.recordInvocation("FetchLogs", []interface{}{arg1, arg2Copy, arg3})
 	fake.fetchLogsMutex.Unlock()
 	if fake.FetchLogsStub != nil {
 		return fake.FetchLogsStub(arg1, arg2, arg3)
@@ -981,6 +1023,7 @@ func (fake *FakeDeployment) TakeSnapshot(arg1 director.InstanceSlug) error {
 	fake.takeSnapshotArgsForCall = append(fake.takeSnapshotArgsForCall, struct {
 		arg1 director.InstanceSlug
 	}{arg1})
+	fake.recordInvocation("TakeSnapshot", []interface{}{arg1})
 	fake.takeSnapshotMutex.Unlock()
 	if fake.TakeSnapshotStub != nil {
 		return fake.TakeSnapshotStub(arg1)
@@ -1014,6 +1057,7 @@ func (fake *FakeDeployment) EnableResurrection(arg1 director.InstanceSlug, arg2 
 		arg1 director.InstanceSlug
 		arg2 bool
 	}{arg1, arg2})
+	fake.recordInvocation("EnableResurrection", []interface{}{arg1, arg2})
 	fake.enableResurrectionMutex.Unlock()
 	if fake.EnableResurrectionStub != nil {
 		return fake.EnableResurrectionStub(arg1, arg2)
@@ -1042,11 +1086,17 @@ func (fake *FakeDeployment) EnableResurrectionReturns(result1 error) {
 }
 
 func (fake *FakeDeployment) Update(manifest []byte, opts director.UpdateOpts) error {
+	var manifestCopy []byte
+	if manifest != nil {
+		manifestCopy = make([]byte, len(manifest))
+		copy(manifestCopy, manifest)
+	}
 	fake.updateMutex.Lock()
 	fake.updateArgsForCall = append(fake.updateArgsForCall, struct {
 		manifest []byte
 		opts     director.UpdateOpts
-	}{manifest, opts})
+	}{manifestCopy, opts})
+	fake.recordInvocation("Update", []interface{}{manifestCopy, opts})
 	fake.updateMutex.Unlock()
 	if fake.UpdateStub != nil {
 		return fake.UpdateStub(manifest, opts)
@@ -1079,6 +1129,7 @@ func (fake *FakeDeployment) Delete(force bool) error {
 	fake.deleteArgsForCall = append(fake.deleteArgsForCall, struct {
 		force bool
 	}{force})
+	fake.recordInvocation("Delete", []interface{}{force})
 	fake.deleteMutex.Unlock()
 	if fake.DeleteStub != nil {
 		return fake.DeleteStub(force)
@@ -1104,6 +1155,82 @@ func (fake *FakeDeployment) DeleteReturns(result1 error) {
 	fake.deleteReturns = struct {
 		result1 error
 	}{result1}
+}
+
+func (fake *FakeDeployment) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.nameMutex.RLock()
+	defer fake.nameMutex.RUnlock()
+	fake.manifestMutex.RLock()
+	defer fake.manifestMutex.RUnlock()
+	fake.cloudConfigMutex.RLock()
+	defer fake.cloudConfigMutex.RUnlock()
+	fake.diffMutex.RLock()
+	defer fake.diffMutex.RUnlock()
+	fake.releasesMutex.RLock()
+	defer fake.releasesMutex.RUnlock()
+	fake.exportReleaseMutex.RLock()
+	defer fake.exportReleaseMutex.RUnlock()
+	fake.stemcellsMutex.RLock()
+	defer fake.stemcellsMutex.RUnlock()
+	fake.vMInfosMutex.RLock()
+	defer fake.vMInfosMutex.RUnlock()
+	fake.instanceInfosMutex.RLock()
+	defer fake.instanceInfosMutex.RUnlock()
+	fake.errandsMutex.RLock()
+	defer fake.errandsMutex.RUnlock()
+	fake.runErrandMutex.RLock()
+	defer fake.runErrandMutex.RUnlock()
+	fake.scanForProblemsMutex.RLock()
+	defer fake.scanForProblemsMutex.RUnlock()
+	fake.resolveProblemsMutex.RLock()
+	defer fake.resolveProblemsMutex.RUnlock()
+	fake.snapshotsMutex.RLock()
+	defer fake.snapshotsMutex.RUnlock()
+	fake.takeSnapshotsMutex.RLock()
+	defer fake.takeSnapshotsMutex.RUnlock()
+	fake.deleteSnapshotMutex.RLock()
+	defer fake.deleteSnapshotMutex.RUnlock()
+	fake.deleteSnapshotsMutex.RLock()
+	defer fake.deleteSnapshotsMutex.RUnlock()
+	fake.deleteVMMutex.RLock()
+	defer fake.deleteVMMutex.RUnlock()
+	fake.startMutex.RLock()
+	defer fake.startMutex.RUnlock()
+	fake.stopMutex.RLock()
+	defer fake.stopMutex.RUnlock()
+	fake.restartMutex.RLock()
+	defer fake.restartMutex.RUnlock()
+	fake.recreateMutex.RLock()
+	defer fake.recreateMutex.RUnlock()
+	fake.setUpSSHMutex.RLock()
+	defer fake.setUpSSHMutex.RUnlock()
+	fake.cleanUpSSHMutex.RLock()
+	defer fake.cleanUpSSHMutex.RUnlock()
+	fake.fetchLogsMutex.RLock()
+	defer fake.fetchLogsMutex.RUnlock()
+	fake.takeSnapshotMutex.RLock()
+	defer fake.takeSnapshotMutex.RUnlock()
+	fake.enableResurrectionMutex.RLock()
+	defer fake.enableResurrectionMutex.RUnlock()
+	fake.updateMutex.RLock()
+	defer fake.updateMutex.RUnlock()
+	fake.deleteMutex.RLock()
+	defer fake.deleteMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeDeployment) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ director.Deployment = new(FakeDeployment)
