@@ -21,7 +21,8 @@ type SessionImpl struct {
 	logger boshlog.Logger
 
 	// Memoized
-	director boshdir.Director
+	director     boshdir.Director
+	directorInfo boshdir.Info
 }
 
 func NewSessionImpl(
@@ -46,17 +47,7 @@ func (c SessionImpl) Environment() string        { return c.context.Environment(
 func (c SessionImpl) Credentials() cmdconf.Creds { return c.context.Credentials() }
 
 func (c SessionImpl) UAA() (boshuaa.UAA, error) {
-	director, err := c.AnonymousDirector()
-	if err != nil {
-		return nil, err
-	}
-
-	info, err := director.Info()
-	if err != nil {
-		return nil, err
-	}
-
-	uaaURL := info.Auth.Options["url"]
+	uaaURL := c.directorInfo.Auth.Options["url"]
 
 	uaaURLStr, ok := uaaURL.(string)
 	if !ok {
@@ -95,10 +86,17 @@ func (c *SessionImpl) Director() (boshdir.Director, error) {
 
 	creds := c.Credentials()
 
-	if creds.IsBasic() {
-		dirConfig.Username = creds.Username
-		dirConfig.Password = creds.Password
-	} else if creds.IsUAA() {
+	if c.directorInfo.Name == "" {
+		err = c.setDirectorInfo()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if c.directorInfo.Auth.Options["provider"] != "uaa" {
+		dirConfig.Username = creds.Client
+		dirConfig.Password = creds.ClientSecret
+	} else {
 		uaa, err := c.UAA()
 		if err != nil {
 			return nil, err
@@ -128,6 +126,21 @@ func (c *SessionImpl) Director() (boshdir.Director, error) {
 	c.director = director
 
 	return c.director, nil
+}
+
+func (c SessionImpl) setDirectorInfo() error {
+	director, err := c.AnonymousDirector()
+	if err != nil {
+		return err
+	}
+
+	info, err := director.Info()
+	if err != nil {
+		return err
+	}
+
+	c.directorInfo = info
+	return nil
 }
 
 func (c SessionImpl) AnonymousDirector() (boshdir.Director, error) {
