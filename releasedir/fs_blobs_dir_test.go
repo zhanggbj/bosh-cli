@@ -122,12 +122,13 @@ file-in-root.tgz:
 already-downloaded.tgz:
   object_id: blob3
   size: 245
-  sha: blob2-sha
+  sha: 1da283030f72f285fa9e05d597a528f08780c992
 `)
 
+// sha: a75d6a93a166480c4db46f95d7dd60ef4e987591
 			fs.WriteFileString("/blob1-tmp", "blob1-content")
 			fs.WriteFileString("/blob2-tmp", "blob2-content")
-			fs.WriteFileString("/dir/blobs/already-downloaded.tgz", "blob3-content")
+				fs.WriteFileString("/dir/blobs/already-downloaded.tgz", "blob3-content")
 
 			times := 0
 			blobstore.GetStub = func(blobID string, digest boshcrypto.Digest) (string, error) {
@@ -138,7 +139,6 @@ already-downloaded.tgz:
 
 		Context("Multiple workers used to download blobs", func() {
 			It("downloads all blobs without local blob copy, skipping non-uploaded blobs", func() {
-
 				blobstore.GetStub = func(blobID string, digest boshcrypto.Digest) (fileName string, err error) {
 					if blobID == "blob1" && digest.String() == "blob1-sha" {
 						return "/blob1-tmp", nil
@@ -278,6 +278,41 @@ already-downloaded.tgz:
 					Expect(fs.FileExists("/dir/blobs/dir/file-in-directory.tgz")).To(BeTrue())
 					Expect(fs.FileExists("/dir/blobs/file-in-root.tgz")).To(BeFalse())
 				})
+			})
+		})
+
+		Context("when blobs already on disk have different sha than in index", func() {
+			BeforeEach(func() {
+				fs.WriteFileString("/blob3-tmp", "blob3-content")
+				fs.WriteFileString("/dir/blobs/already-downloaded.tgz", "incorrect-blob3-content")
+
+				times := 0
+				blobstore.GetStub = func(blobID string, digest boshcrypto.Digest) (string, error) {
+					defer func() { times += 1 }()
+					return []string{"/blob3-tmp", "/blob1-tmp", "/blob2-tmp"}[times], nil
+				}
+			})
+
+			It("downloads new copy from blobstore", func() {
+				err := act(1)
+				Expect(err).ToNot(HaveOccurred())
+
+				id3, digest3 := blobstore.GetArgsForCall(0)
+				Expect(id3).To(Equal("blob3"))
+				Expect(digest3).To(Equal(boshcrypto.MustParseMultipleDigest("a75d6a93a166480c4db46f95d7dd60ef4e987591")))
+
+				id1, digest1 := blobstore.GetArgsForCall(1)
+				Expect(id1).To(Equal("blob1"))
+				Expect(digest1).To(Equal(boshcrypto.MustParseMultipleDigest("blob1-sha")))
+
+				id2, digest2 := blobstore.GetArgsForCall(2)
+				Expect(id2).To(Equal("blob2"))
+				Expect(digest2).To(Equal(boshcrypto.MustParseMultipleDigest("blob2-sha")))
+
+				Expect(fs.FileExists("/dir/blobs/dir")).To(BeTrue())
+				Expect(fs.ReadFileString("/dir/blobs/dir/file-in-directory.tgz")).To(Equal("blob1-content"))
+				Expect(fs.ReadFileString("/dir/blobs/file-in-root.tgz")).To(Equal("blob2-content"))
+				Expect(fs.ReadFileString("/dir/blobs/already-downloaded.tgz")).To(Equal("blob3-content"))
 			})
 		})
 

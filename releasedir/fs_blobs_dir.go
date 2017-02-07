@@ -5,6 +5,7 @@ import (
 	"os"
 	gopath "path"
 	"sort"
+	"errors"
 
 	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
 	boshcrypto "github.com/cloudfoundry/bosh-utils/crypto"
@@ -253,16 +254,38 @@ func (d FSBlobsDir) UploadBlobs() error {
 	return nil
 }
 
+func (d FSBlobsDir) checkBlobExistence(dstPath string, digest boshcrypto.MultipleDigest) error {
+	if d.fs.FileExists(dstPath) {
+		err := digest.VerifyFilePath(dstPath, d.fs)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("File does not exist")
+}
+
 func (d FSBlobsDir) downloadBlob(blob Blob) error {
 	dstPath := gopath.Join(d.dirPath, blob.Path)
 
-	if d.fs.FileExists(dstPath) {
+	digest, err := boshcrypto.ParseMultipleDigest(blob.SHA1)
+
+	//if err != nil {
+	//	return bosherr.WrapErrorf(
+	//		err, "Generating multi digest for blob '%s' for path '%s' with digest string '%s'", blob.BlobstoreID, blob.Path, blob.SHA1)
+	//}
+
+	// Need to check not only if file exists, but if file exists and is correct file
+	err = d.checkBlobExistence(dstPath, digest)
+
+	if err == nil {
 		return nil
 	}
 
 	d.reporter.BlobDownloadStarted(blob.Path, blob.Size, blob.BlobstoreID, blob.SHA1)
 
-	digest, err := boshcrypto.ParseMultipleDigest(blob.SHA1)
 	if err != nil {
 		d.reporter.BlobDownloadFinished(blob.Path, blob.BlobstoreID, err)
 		return bosherr.WrapErrorf(

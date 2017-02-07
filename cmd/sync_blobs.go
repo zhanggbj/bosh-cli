@@ -15,6 +15,11 @@ func NewSyncBlobsCmd(blobsDir boshreldir.BlobsDir, numOfParallelWorkers int) Syn
 }
 
 func (c SyncBlobsCmd) Run() error {
+	err := c.blobsDir.CheckBlobs()
+	if err != nil {
+		return bosherr.WrapErrorf(err, "Verifying existing blobs")
+	}
+
 	err := c.blobsDir.DownloadBlobs(c.numOfParallelWorkers)
 	if err != nil {
 		return bosherr.WrapErrorf(err, "Downloading blobs")
