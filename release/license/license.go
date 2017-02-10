@@ -1,6 +1,7 @@
 package license
 
 import (
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	. "github.com/cloudfoundry/bosh-cli/release/resource"
 )
 
@@ -20,3 +21,8 @@ func (l *License) ArchiveSHA1() string { return l.resource.ArchiveSHA1() }
 
 func (l *License) Build(dev, final ArchiveIndex) error { return l.resource.Build(dev, final) }
 func (l *License) Finalize(final ArchiveIndex) error   { return l.resource.Finalize(final) }
+
+func (l *License) RehashWithCalculator(calculator crypto.DigestCalculator) (*License, error) {
+	newLicenseResource, err := l.resource.RehashWithCalculator(calculator)
+	return &License{newLicenseResource}, err
+}

@@ -3,6 +3,7 @@ package resource
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
@@ -104,6 +105,23 @@ func (r *ResourceImpl) Finalize(finalIndex ArchiveIndex) error {
 	_, _, err = finalIndex.Add(r.name, r.fingerprint, r.ArchivePath(), r.ArchiveSHA1())
 
 	return err
+}
+
+func (r *ResourceImpl) RehashWithCalculator(calculator crypto.DigestCalculator) (Resource, error) {
+	//TODO verify resource first
+
+	newSHA, err := calculator.Calculate(r.archivePath)
+
+	return &ResourceImpl{
+		name:        r.name,
+		fingerprint: r.fingerprint,
+
+		archivePath: r.archivePath,
+		archiveSHA1: newSHA,
+
+		expectToExist: r.expectToExist,
+		archive:       r.archive,
+	}, err
 }
 
 func (r *ResourceImpl) findAndAttach(devIndex, finalIndex ArchiveIndex, errIfNotFound bool) error {

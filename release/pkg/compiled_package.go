@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
@@ -92,3 +93,19 @@ func (p *CompiledPackage) Deps() []Compilable {
 }
 
 func (p *CompiledPackage) IsCompiled() bool { return true }
+
+func (p *CompiledPackage) RehashWithCalculator(digestCalculator crypto.DigestCalculator) (*CompiledPackage, error) {
+	sha256Archive, err := digestCalculator.Calculate(p.archivePath)
+
+	return &CompiledPackage{
+		name:          p.name,
+		fingerprint:   p.fingerprint,
+		osVersionSlug: p.osVersionSlug,
+
+		Dependencies:    p.Dependencies,
+		dependencyNames: p.dependencyNames,
+
+		archivePath: p.archivePath,
+		archiveSHA1: sha256Archive,
+	}, err
+}

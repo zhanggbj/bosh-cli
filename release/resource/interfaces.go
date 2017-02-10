@@ -1,5 +1,7 @@
 package resource
 
+import "github.com/cloudfoundry/bosh-cli/crypto"
+
 //go:generate counterfeiter . Archive
 
 type Archive interface {
@@ -27,6 +29,8 @@ type Resource interface {
 
 	Build(dev, final ArchiveIndex) error
 	Finalize(final ArchiveIndex) error
+
+	RehashWithCalculator(calculator crypto.DigestCalculator) (Resource, error)
 }
 
 //go:generate counterfeiter . Fingerprinter

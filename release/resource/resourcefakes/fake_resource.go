@@ -4,6 +4,7 @@ package resourcefakes
 import (
 	"sync"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	"github.com/cloudfoundry/bosh-cli/release/resource"
 )
 
@@ -48,6 +49,15 @@ type FakeResource struct {
 	}
 	finalizeReturns struct {
 		result1 error
+	}
+	RehashWithCalculatorStub        func(calculator crypto.DigestCalculator) (resource.Resource, error)
+	rehashWithCalculatorMutex       sync.RWMutex
+	rehashWithCalculatorArgsForCall []struct {
+		calculator crypto.DigestCalculator
+	}
+	rehashWithCalculatorReturns struct {
+		result1 resource.Resource
+		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -220,6 +230,40 @@ func (fake *FakeResource) FinalizeReturns(result1 error) {
 	}{result1}
 }
 
+func (fake *FakeResource) RehashWithCalculator(calculator crypto.DigestCalculator) (resource.Resource, error) {
+	fake.rehashWithCalculatorMutex.Lock()
+	fake.rehashWithCalculatorArgsForCall = append(fake.rehashWithCalculatorArgsForCall, struct {
+		calculator crypto.DigestCalculator
+	}{calculator})
+	fake.recordInvocation("RehashWithCalculator", []interface{}{calculator})
+	fake.rehashWithCalculatorMutex.Unlock()
+	if fake.RehashWithCalculatorStub != nil {
+		return fake.RehashWithCalculatorStub(calculator)
+	} else {
+		return fake.rehashWithCalculatorReturns.result1, fake.rehashWithCalculatorReturns.result2
+	}
+}
+
+func (fake *FakeResource) RehashWithCalculatorCallCount() int {
+	fake.rehashWithCalculatorMutex.RLock()
+	defer fake.rehashWithCalculatorMutex.RUnlock()
+	return len(fake.rehashWithCalculatorArgsForCall)
+}
+
+func (fake *FakeResource) RehashWithCalculatorArgsForCall(i int) crypto.DigestCalculator {
+	fake.rehashWithCalculatorMutex.RLock()
+	defer fake.rehashWithCalculatorMutex.RUnlock()
+	return fake.rehashWithCalculatorArgsForCall[i].calculator
+}
+
+func (fake *FakeResource) RehashWithCalculatorReturns(result1 resource.Resource, result2 error) {
+	fake.RehashWithCalculatorStub = nil
+	fake.rehashWithCalculatorReturns = struct {
+		result1 resource.Resource
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeResource) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -235,6 +279,8 @@ func (fake *FakeResource) Invocations() map[string][][]interface{} {
 	defer fake.buildMutex.RUnlock()
 	fake.finalizeMutex.RLock()
 	defer fake.finalizeMutex.RUnlock()
+	fake.rehashWithCalculatorMutex.RLock()
+	defer fake.rehashWithCalculatorMutex.RUnlock()
 	return fake.invocations
 }
 

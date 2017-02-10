@@ -5,6 +5,7 @@ import (
 	biproperty "github.com/cloudfoundry/bosh-utils/property"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	boshpkg "github.com/cloudfoundry/bosh-cli/release/pkg"
 	. "github.com/cloudfoundry/bosh-cli/release/resource"
 )
@@ -67,6 +68,21 @@ func (j *Job) AttachPackages(packages []*boshpkg.Package) error {
 	}
 
 	return j.AttachCompilablePackages(coms)
+}
+
+func (j *Job) RehashWithCalculator(calculator crypto.DigestCalculator) *Job {
+	newResource, _ := j.resource.RehashWithCalculator(calculator)
+
+	return &Job{
+		resource:     newResource,
+		Templates:    j.Templates,
+		PackageNames: j.PackageNames,
+		Packages:     j.Packages,
+		Properties:   j.Properties,
+
+		extractedPath: j.extractedPath,
+		fs:            j.fs,
+	}
 }
 
 func (j *Job) AttachCompilablePackages(packages []boshpkg.Compilable) error {

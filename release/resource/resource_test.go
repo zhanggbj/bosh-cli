@@ -8,6 +8,7 @@ import (
 
 	. "github.com/cloudfoundry/bosh-cli/release/resource"
 	fakeres "github.com/cloudfoundry/bosh-cli/release/resource/resourcefakes"
+	"github.com/cloudfoundry/bosh-cli/crypto/fakes"
 )
 
 var _ = Describe("NewResource", func() {
@@ -336,7 +337,7 @@ var _ = Describe("NewExistingResource", func() {
 	})
 })
 
-var _ = Describe("NewResourceWithBuiltArchive", func() {
+var _ = FDescribe("NewResourceWithBuiltArchive", func() {
 	var (
 		devIndex, finalIndex *fakeres.FakeArchiveIndex
 		resource             Resource
@@ -371,6 +372,46 @@ var _ = Describe("NewResourceWithBuiltArchive", func() {
 			Expect(resource.ArchiveSHA1()).To(Equal("sha1"))
 		})
 	})
+
+	Describe("RehashWithCalculator", func() {
+		Context("Given a sha256 calculator", func() {
+			var fakeDigestCalculator *fakes.FakeDigestCalculator
+
+			BeforeEach(func() {
+
+				fakeDigestCalculator = fakes.NewFakeDigestCalculator()
+				fakeDigestCalculator.SetCalculateBehavior(map[string]fakes.CalculateInput{
+					"path": {DigestStr: "sha256:new_resource_sha"},
+				})
+			})
+
+			Context("Given a resource with a valid sha128", func() {
+				It("A copy of a resource with sha256", func() {
+					newSha256Resource, err := resource.RehashWithCalculator(fakeDigestCalculator)
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(newSha256Resource.ArchiveSHA1()).To(Equal("sha256:new_resource_sha"))
+				})
+			})
+
+			Context("Given a resource with an invalid sha128", func() {
+				BeforeEach(func() {
+					fakeDigestCalculator.SetCalculateBehavior(map[string]fakes.CalculateInput{
+						"path": {Err: errors.New("disaster")},
+					})
+				})
+
+				It("A copy of a resource with sha256", func() {
+					_, err := resource.RehashWithCalculator(fakeDigestCalculator)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("disaster"))
+				})
+			})
+
+		})
+
+	})
+
 
 	Describe("Build", func() {
 		It("does nothing because we already have archive", func() {

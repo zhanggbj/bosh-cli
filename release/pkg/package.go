@@ -4,6 +4,7 @@ import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
+	"github.com/cloudfoundry/bosh-cli/crypto"
 	. "github.com/cloudfoundry/bosh-cli/release/resource"
 )
 
@@ -51,6 +52,17 @@ func (p Package) Fingerprint() string { return p.resource.Fingerprint() }
 
 func (p *Package) ArchivePath() string { return p.resource.ArchivePath() }
 func (p *Package) ArchiveSHA1() string { return p.resource.ArchiveSHA1() }
+
+func (p *Package) RehashWithCalculator(calculator crypto.DigestCalculator) *Package {
+	newResource, _ := p.resource.RehashWithCalculator(calculator)
+	return &Package{
+		resource:        newResource,
+		Dependencies:    p.Dependencies,
+		dependencyNames: p.dependencyNames,
+		extractedPath:   p.extractedPath,
+		fs:              p.fs,
+	}
+}
 
 func (p *Package) Build(dev, final ArchiveIndex) error { return p.resource.Build(dev, final) }
 func (p *Package) Finalize(final ArchiveIndex) error   { return p.resource.Finalize(final) }
