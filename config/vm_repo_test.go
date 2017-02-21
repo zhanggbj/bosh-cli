@@ -84,4 +84,84 @@ var _ = Describe("VMRepo", func() {
 			Expect(found).To(BeFalse())
 		})
 	})
+
+	Describe("FindCurrentIP", func() {
+		Context("when current IP is specified", func() {
+			BeforeEach(func() {
+				err := repo.UpdateCurrentIP("10.10.1.3")
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("returns current IP", func() {
+				ip, found, err := repo.FindCurrentIP()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeTrue())
+				Expect(ip).To(Equal("10.10.1.3"))
+			})
+		})
+
+		Context("when current IP is not specified", func() {
+			It("returns false", func() {
+				_, found, err := repo.FindCurrentIP()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeFalse())
+			})
+		})
+	})
+
+	Describe("UpdateCurrentIP", func() {
+		It("updates vm current IP", func() {
+			err := repo.UpdateCurrentIP("10.10.1.3")
+			Expect(err).ToNot(HaveOccurred())
+
+			deploymentState, err := deploymentStateService.Load()
+			Expect(err).ToNot(HaveOccurred())
+
+			expectedConfig := DeploymentState{
+				DirectorID: "fake-uuid-0",
+				CurrentIP:  "10.10.1.3",
+			}
+			Expect(deploymentState).To(Equal(expectedConfig))
+		})
+	})
+
+	Describe("FindCurrentAgentId", func() {
+		Context("when current agent ID is set", func() {
+			BeforeEach(func() {
+				err := repo.UpdateCurrentAgentId("fake-agent-id")
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("returns current agent ID", func() {
+				currentAgentID, found, err := repo.FindCurrentAgentId()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeTrue())
+				Expect(currentAgentID).To(Equal("fake-agent-id"))
+			})
+		})
+
+		Context("when current agent ID is not set", func() {
+			It("returns false", func() {
+				_, found, err := repo.FindCurrentAgentId()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeFalse())
+			})
+		})
+	})
+
+	Describe("UpdateCurrentAgentId", func() {
+		It("updates vm current agent ID", func() {
+			err := repo.UpdateCurrentAgentId("fake-agent-id")
+			Expect(err).ToNot(HaveOccurred())
+
+			deploymentState, err := deploymentStateService.Load()
+			Expect(err).ToNot(HaveOccurred())
+
+			expectedConfig := DeploymentState{
+				DirectorID:     "fake-uuid-0",
+				CurrentAgentID: "fake-agent-id",
+			}
+			Expect(deploymentState).To(Equal(expectedConfig))
+		})
+	})
 })

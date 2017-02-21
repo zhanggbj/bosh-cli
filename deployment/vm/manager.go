@@ -94,9 +94,32 @@ func (m *manager) Create(stemcell bistemcell.CloudStemcell, deploymentManifest b
 		return nil, bosherr.WrapErrorf(err, "Getting resource pool for job '%s'", jobName)
 	}
 
-	agentID, err := m.uuidGenerator.Generate()
+	agentID, found, err := m.vmRepo.FindCurrentAgentId()
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Generating agent ID")
+		return nil, bosherr.WrapError(err, "Finding currently agent id of deployed vm")
+	}
+
+	if !found {
+		agentID, err = m.uuidGenerator.Generate()
+		if err != nil {
+			return nil, bosherr.WrapError(err, "Generating agent ID")
+		}
+	}
+
+	currentIP, found, err := m.vmRepo.FindCurrentIP()
+	if err != nil {
+		return nil, bosherr.WrapError(err, "Finding currently IP address of deployed vm")
+	}
+
+	ifaceMap := map[string]biproperty.Map{}
+
+	if found {
+		for networkName, networkInterface := range networkInterfaces {
+			networkInterface["ip"] = currentIP
+			ifaceMap[networkName] = networkInterface
+		}
+	} else {
+		ifaceMap = networkInterfaces
 	}
 
 	cid, err := m.createAndRecordVM(agentID, stemcell, resourcePool, networkInterfaces)
@@ -145,6 +168,11 @@ func (m *manager) createAndRecordVM(agentID string, stemcell bistemcell.CloudSte
 	err = m.vmRepo.UpdateCurrent(cid)
 	if err != nil {
 		return "", bosherr.WrapError(err, "Updating current vm record")
+	}
+
+	err = m.vmRepo.UpdateCurrentAgentId(agentID)
+	if err != nil {
+		return "", bosherr.WrapError(err, "Updating current agent id record")
 	}
 
 	return cid, nil

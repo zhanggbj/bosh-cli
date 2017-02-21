@@ -7,11 +7,31 @@ type FakeVMRepo struct {
 	ClearCurrentCalled bool
 	ClearCurrentErr    error
 
-	findCurrentOutput vmRepoFindCurrentOutput
+	findCurrentOutput        vmRepoFindCurrentOutput
+	findCurrentIpOutput      vmRepoFindCurrentIpOutput
+	findCurrentAgentIdOutput vmRepoFindCurrentAgentIdOutput
+
+	updateCurrentIp    string
+	updateCurrentIpErr error
+
+	updateCurrentAgentId    string
+	updateCurrentAgentIdErr error
 }
 
 type vmRepoFindCurrentOutput struct {
 	cid   string
+	found bool
+	err   error
+}
+
+type vmRepoFindCurrentAgentIdOutput struct {
+	agentId string
+	found   bool
+	err     error
+}
+
+type vmRepoFindCurrentIpOutput struct {
+	ip    string
 	found bool
 	err   error
 }
@@ -40,4 +60,38 @@ func (r *FakeVMRepo) UpdateCurrent(cid string) error {
 func (r *FakeVMRepo) ClearCurrent() error {
 	r.ClearCurrentCalled = true
 	return r.ClearCurrentErr
+}
+
+func (r *FakeVMRepo) FindCurrentIP() (string, bool, error) {
+	return r.findCurrentIpOutput.ip, r.findCurrentIpOutput.found, r.findCurrentIpOutput.err
+}
+
+func (r *FakeVMRepo) UpdateCurrentIP(ip string) error {
+	r.updateCurrentIp = ip
+	return r.updateCurrentIpErr
+}
+
+func (r *FakeVMRepo) SetFindCurrentIPBehavior(ip string, found bool, err error) {
+	r.findCurrentIpOutput = vmRepoFindCurrentIpOutput{
+		ip:    ip,
+		found: found,
+		err:   err,
+	}
+}
+
+func (r *FakeVMRepo) FindCurrentAgentId() (string, bool, error) {
+	return r.findCurrentAgentIdOutput.agentId, r.findCurrentAgentIdOutput.found, r.findCurrentAgentIdOutput.err
+}
+
+func (r *FakeVMRepo) UpdateCurrentAgentId(agentId string) error {
+	r.updateCurrentAgentId = agentId
+	return r.updateCurrentAgentIdErr
+}
+
+func (r *FakeVMRepo) SetFindCurrentAgentIdBehavior(agentId string, found bool, err error) {
+	r.findCurrentAgentIdOutput = vmRepoFindCurrentAgentIdOutput{
+		agentId: agentId,
+		found:   found,
+		err:     err,
+	}
 }
