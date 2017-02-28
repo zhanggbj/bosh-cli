@@ -94,16 +94,9 @@ func (m *manager) Create(stemcell bistemcell.CloudStemcell, deploymentManifest b
 		return nil, bosherr.WrapErrorf(err, "Getting resource pool for job '%s'", jobName)
 	}
 
-	agentID, found, err := m.vmRepo.FindCurrentAgentId()
+	agentID, err := m.uuidGenerator.Generate()
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Finding currently agent id of deployed vm")
-	}
-
-	if !found {
-		agentID, err = m.uuidGenerator.Generate()
-		if err != nil {
-			return nil, bosherr.WrapError(err, "Generating agent ID")
-		}
+		return nil, bosherr.WrapError(err, "Generating agent ID")
 	}
 
 	currentIP, found, err := m.vmRepo.FindCurrentIP()
@@ -111,18 +104,14 @@ func (m *manager) Create(stemcell bistemcell.CloudStemcell, deploymentManifest b
 		return nil, bosherr.WrapError(err, "Finding currently IP address of deployed vm")
 	}
 
-	ifaceMap := map[string]biproperty.Map{}
-
+	vmNetworkInterfaces := map[string]biproperty.Map{}
 	if found {
-		for networkName, networkInterface := range networkInterfaces {
-			networkInterface["ip"] = currentIP
-			ifaceMap[networkName] = networkInterface
-		}
+		m.setVMNetworkInterfaces(vmNetworkInterfaces, currentIP, networkInterfaces)
 	} else {
-		ifaceMap = networkInterfaces
+		vmNetworkInterfaces = networkInterfaces
 	}
 
-	cid, err := m.createAndRecordVM(agentID, stemcell, resourcePool, networkInterfaces)
+	cid, err := m.createAndRecordVM(agentID, stemcell, resourcePool, vmNetworkInterfaces)
 	if err != nil {
 		return nil, err
 	}
@@ -170,10 +159,12 @@ func (m *manager) createAndRecordVM(agentID string, stemcell bistemcell.CloudSte
 		return "", bosherr.WrapError(err, "Updating current vm record")
 	}
 
-	err = m.vmRepo.UpdateCurrentAgentId(agentID)
-	if err != nil {
-		return "", bosherr.WrapError(err, "Updating current agent id record")
-	}
-
 	return cid, nil
+}
+
+func (m *manager) setVMNetworkInterfaces(vmNetworkInterfaces map[string]biproperty.Map, currentIP string, networkInterfaces map[string]biproperty.Map) {
+	for networkName, networkInterface := range networkInterfaces {
+		networkInterface["ip"] = currentIP
+		vmNetworkInterfaces[networkName] = networkInterface
+	}
 }

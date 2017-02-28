@@ -2,15 +2,14 @@ package config
 
 import (
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	"net"
 )
 
 type VMRepo interface {
 	FindCurrent() (cid string, found bool, err error)
 	FindCurrentIP() (ip string, found bool, err error)
-	FindCurrentAgentId() (agentId string, found bool, err error)
 	UpdateCurrent(cid string) error
 	UpdateCurrentIP(ip string) error
-	UpdateCurrentAgentId(agentId string) error
 	ClearCurrent() error
 }
 
@@ -76,7 +75,12 @@ func (r vMRepo) FindCurrentIP() (string, bool, error) {
 
 	currentIP := deploymentState.CurrentIP
 	if currentIP != "" {
-		return currentIP, true, nil
+		parsedIP := net.ParseIP(currentIP)
+		if parsedIP == nil {
+			return "", false, bosherr.Errorf("%v is not a valid IP address", currentIP)
+		} else {
+			return parsedIP.String(), true, nil
+		}
 	}
 
 	return "", false, nil
@@ -89,35 +93,6 @@ func (r vMRepo) UpdateCurrentIP(ip string) error {
 	}
 
 	deploymentState.CurrentIP = ip
-
-	err = r.deploymentStateService.Save(deploymentState)
-	if err != nil {
-		return bosherr.WrapError(err, "Saving new config")
-	}
-	return nil
-}
-
-func (r vMRepo) FindCurrentAgentId() (string, bool, error) {
-	deploymentState, err := r.deploymentStateService.Load()
-	if err != nil {
-		return "", false, bosherr.WrapError(err, "Loading existing config")
-	}
-
-	currentAgentID := deploymentState.CurrentAgentID
-	if currentAgentID != "" {
-		return currentAgentID, true, nil
-	}
-
-	return "", false, nil
-}
-
-func (r vMRepo) UpdateCurrentAgentId(agentId string) error {
-	deploymentState, err := r.deploymentStateService.Load()
-	if err != nil {
-		return bosherr.WrapError(err, "Loading existing config")
-	}
-
-	deploymentState.CurrentAgentID = agentId
 
 	err = r.deploymentStateService.Save(deploymentState)
 	if err != nil {

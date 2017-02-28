@@ -7,27 +7,17 @@ type FakeVMRepo struct {
 	ClearCurrentCalled bool
 	ClearCurrentErr    error
 
-	findCurrentOutput        vmRepoFindCurrentOutput
-	findCurrentIpOutput      vmRepoFindCurrentIpOutput
-	findCurrentAgentIdOutput vmRepoFindCurrentAgentIdOutput
+	findCurrentOutput   vmRepoFindCurrentOutput
+	findCurrentIpOutput vmRepoFindCurrentIpOutput
 
 	updateCurrentIp    string
 	updateCurrentIpErr error
-
-	updateCurrentAgentId    string
-	updateCurrentAgentIdErr error
 }
 
 type vmRepoFindCurrentOutput struct {
 	cid   string
 	found bool
 	err   error
-}
-
-type vmRepoFindCurrentAgentIdOutput struct {
-	agentId string
-	found   bool
-	err     error
 }
 
 type vmRepoFindCurrentIpOutput struct {
@@ -76,22 +66,5 @@ func (r *FakeVMRepo) SetFindCurrentIPBehavior(ip string, found bool, err error) 
 		ip:    ip,
 		found: found,
 		err:   err,
-	}
-}
-
-func (r *FakeVMRepo) FindCurrentAgentId() (string, bool, error) {
-	return r.findCurrentAgentIdOutput.agentId, r.findCurrentAgentIdOutput.found, r.findCurrentAgentIdOutput.err
-}
-
-func (r *FakeVMRepo) UpdateCurrentAgentId(agentId string) error {
-	r.updateCurrentAgentId = agentId
-	return r.updateCurrentAgentIdErr
-}
-
-func (r *FakeVMRepo) SetFindCurrentAgentIdBehavior(agentId string, found bool, err error) {
-	r.findCurrentAgentIdOutput = vmRepoFindCurrentAgentIdOutput{
-		agentId: agentId,
-		found:   found,
-		err:     err,
 	}
 }

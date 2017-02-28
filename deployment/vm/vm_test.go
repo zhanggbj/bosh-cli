@@ -395,7 +395,7 @@ var _ = Describe("VM", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("do not delete vm", func() {
+			It("does not delete vm", func() {
 				err := vm.Delete()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fakeCloud.DeleteVMInput).To(Equal(fakebicloud.DeleteVMInput{
@@ -413,6 +413,18 @@ var _ = Describe("VM", func() {
 				err := vm.Delete()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fakeStemcellRepo.ClearCurrentCalled).To(BeTrue())
+			})
+		})
+
+		Context("when failing to find current IP", func() {
+			BeforeEach(func() {
+				fakeVMRepo.SetFindCurrentIPBehavior("", false, errors.New("fake-error"))
+			})
+
+			It("returns an error", func() {
+				err := vm.Delete()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Finding currently IP address of deployed vm"))
 			})
 		})
 
